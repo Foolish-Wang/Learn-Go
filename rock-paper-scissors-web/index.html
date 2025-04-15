@@ -1,0 +1,183 @@
+<!-- filepath: c:\Go\Learn Go\rock-paper-scissors-web\index.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rock Paper Scissors Game</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f5f5f5;
+        margin: 0;
+        padding: 20px;
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+      }
+      .container {
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        margin-top: 40px;
+        text-align: center;
+        max-width: 800px;
+        width: 100%;
+      }
+      h1 {
+        color: #2c3e50;
+        margin-bottom: 30px;
+      }
+      .choices {
+        display: flex;
+        justify-content: space-around;
+        margin: 40px 0;
+      }
+      .choice {
+        cursor: pointer;
+        background-color: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 50%;
+        width: 120px;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        transition: all 0.3s ease;
+      }
+      .choice:hover {
+        transform: scale(1.1);
+        background-color: #e9ecef;
+        border-color: #dee2e6;
+      }
+      .result {
+        font-size: 24px;
+        margin: 30px 0;
+        min-height: 60px;
+      }
+      .score {
+        display: flex;
+        justify-content: space-around;
+        font-size: 20px;
+        margin: 20px 0;
+      }
+      .score div {
+        padding: 10px 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+      button {
+        background-color: #4caf50;
+        border: none;
+        color: white;
+        padding: 12px 24px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 10px 2px;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Rock Paper Scissors Game</h1>
+
+      <div class="choices">
+        <div class="choice" id="rock">✊</div>
+        <div class="choice" id="paper">✋</div>
+        <div class="choice" id="scissors">✌️</div>
+      </div>
+
+      <div class="result" id="result">Choose an option to start the game!</div>
+
+      <div class="score">
+        <div>You: <span id="user-score">0</span></div>
+        <div>Computer: <span id="computer-score">0</span></div>
+      </div>
+
+      <button id="reset">Reset Game</button>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const choices = document.querySelectorAll('.choice');
+        const result = document.getElementById('result');
+        const userScoreElement = document.getElementById('user-score');
+        const computerScoreElement = document.getElementById('computer-score');
+        const resetButton = document.getElementById('reset');
+
+        let userScore = 0;
+        let computerScore = 0;
+
+        // 为每个选择添加点击事件
+        choices.forEach((choice) => {
+          choice.addEventListener('click', function () {
+            const playerChoice = this.id; // rock, paper, or scissors
+
+            // 发送请求到服务器
+            fetch('/play', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ playerChoice: playerChoice }),
+            })
+              .then((response) => {
+                if (!response.ok) {
+                  throw new Error('Network response was not ok');
+                }
+                return response.json();
+              })
+              .then((data) => {
+                // 更新UI
+                const playerChoice = data.playerChoice;
+                const computerChoice = data.computerChoice;
+                const gameResult = data.result;
+
+                // 更新结果信息
+                result.innerHTML = `
+            You chose <strong>${playerChoice}</strong>.
+            Computer chose <strong>${computerChoice}</strong>.<br>
+            ${data.message}
+          `;
+
+                // 更新分数
+                if (gameResult === 'win') {
+                  userScore++;
+                  userScoreElement.textContent = userScore;
+                } else if (gameResult === 'lose') {
+                  computerScore++;
+                  computerScoreElement.textContent = computerScore;
+                }
+              })
+              .catch((error) => {
+                console.error('Error:', error);
+                result.textContent = 'An error occurred. Please try again.';
+              });
+          });
+        });
+
+        // 重置游戏
+        resetButton.addEventListener('click', function () {
+          userScore = 0;
+          computerScore = 0;
+          userScoreElement.textContent = '0';
+          computerScoreElement.textContent = '0';
+          result.textContent = 'Choose an option to start the game!';
+        });
+      });
+    </script>
+  </body>
+</html>
